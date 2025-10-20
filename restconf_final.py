@@ -77,3 +77,23 @@ def disable():
         return f"Cannot shutdown: Interface loopback {STUDENT_ID}"
     else:
         return f"Error disabling interface {STUDENT_ID}"
+
+def status():
+    api_url_status = f"https://{ROUTER_IP}/restconf/data/ietf-interfaces:interfaces-state/interface=Loopback{STUDENT_ID}"
+    resp = requests.get(api_url_status, auth=basicauth, headers=headers, verify=False)
+
+    if 200 <= resp.status_code <= 299:
+        response_json = resp.json()
+        interface = response_json["ietf-interfaces:interface"][0]
+        admin_status = interface.get("admin-status")
+        oper_status = interface.get("oper-status")
+        if admin_status == "up" and oper_status == "up":
+            return f"Interface loopback {STUDENT_ID} is enabled"
+        elif admin_status == "down" and oper_status == "down":
+            return f"Interface loopback {STUDENT_ID} is disabled"
+        else:
+            return f"Interface loopback {STUDENT_ID} admin={admin_status}, oper={oper_status}"
+    elif resp.status_code == 404:
+        return f"No Interface loopback {STUDENT_ID}"
+    else:
+        return f"Error checking status for {STUDENT_ID}"
