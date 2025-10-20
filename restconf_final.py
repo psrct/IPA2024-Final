@@ -40,7 +40,6 @@ def create():
         return f"Cannot create: Interface loopback {STUDENT_ID}"
     return f"Error: Interface Loopback {STUDENT_ID} already exists"
 
-
 def delete():
     resp = requests.delete(api_url, auth=basicauth, headers=headers, verify=False)
     if resp.status_code in (200, 204):
@@ -49,54 +48,3 @@ def delete():
         return f"Cannot delete: Interface loopback {STUDENT_ID}"
     else:
         return f"Error deleting interface {STUDENT_ID}"
-
-
-def enable():
-    yangConfig = {
-        "ietf-interfaces:interface": {"enabled": True}
-    }
-
-    resp = requests.patch(api_url, data=json.dumps(yangConfig), auth=basicauth, headers=headers, verify=False)
-
-    if 200 <= resp.status_code <= 299:
-        return f"Interface loopback {STUDENT_ID} is enabled successfully"
-    elif resp.status_code == 404:
-        return f"Cannot enable: Interface loopback {STUDENT_ID}"
-    else:
-        return f"Error enabling interface {STUDENT_ID}"
-
-def disable():
-    yangConfig = {
-        "ietf-interfaces:interface": {"enabled": False}
-    }
-
-    resp = requests.patch(api_url, data=json.dumps(yangConfig), auth=basicauth, headers=headers, verify=False)
-
-
-    if 200 <= resp.status_code <= 299:
-        return f"Interface loopback {STUDENT_ID} is shutdowned successfully"
-    elif resp.status_code == 404:
-        return f"Cannot shutdown: Interface loopback {STUDENT_ID}"
-    else:
-        return f"Error disabling interface {STUDENT_ID}"
-
-
-def status():
-    api_url_status = f"https://{ROUTER_IP}/restconf/data/ietf-interfaces:interfaces-state/interface=Loopback{STUDENT_ID}"
-    resp = requests.get(api_url_status, auth=basicauth, headers=headers, verify=False)
-
-    if 200 <= resp.status_code <= 299:
-        response_json = resp.json()
-        interface = response_json["ietf-interfaces:interface"][0]
-        admin_status = interface.get("admin-status")
-        oper_status = interface.get("oper-status")
-        if admin_status == "up" and oper_status == "up":
-            return f"Interface loopback {STUDENT_ID} is enabled"
-        elif admin_status == "down" and oper_status == "down":
-            return f"Interface loopback {STUDENT_ID} is disabled"
-        else:
-            return f"Interface loopback {STUDENT_ID} admin={admin_status}, oper={oper_status}"
-    elif resp.status_code == 404:
-        return f"No Interface loopback {STUDENT_ID}"
-    else:
-        return f"Error checking status for {STUDENT_ID}"
