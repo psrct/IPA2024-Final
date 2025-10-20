@@ -48,3 +48,32 @@ def delete():
         return f"Cannot delete: Interface loopback {STUDENT_ID}"
     else:
         return f"Error deleting interface {STUDENT_ID}"
+
+def enable():
+    yangConfig = {
+        "ietf-interfaces:interface": {"enabled": True}
+    }
+
+    resp = requests.patch(api_url, data=json.dumps(yangConfig), auth=basicauth, headers=headers, verify=False)
+
+    if 200 <= resp.status_code <= 299:
+        return f"Interface loopback {STUDENT_ID} is enabled successfully"
+    elif resp.status_code == 404:
+        return f"Cannot enable: Interface loopback {STUDENT_ID}"
+    else:
+        return f"Error enabling interface {STUDENT_ID}"
+
+def disable():
+    yangConfig = {
+        "ietf-interfaces:interface": {"enabled": False}
+    }
+
+    resp = requests.patch(api_url, data=json.dumps(yangConfig), auth=basicauth, headers=headers, verify=False)
+
+
+    if 200 <= resp.status_code <= 299:
+        return f"Interface loopback {STUDENT_ID} is shutdowned successfully"
+    elif resp.status_code == 404:
+        return f"Cannot shutdown: Interface loopback {STUDENT_ID}"
+    else:
+        return f"Error disabling interface {STUDENT_ID}"
