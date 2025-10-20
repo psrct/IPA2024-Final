@@ -1,23 +1,21 @@
 import os, json, requests
 requests.packages.urllib3.disable_warnings()
 
-ROUTER_IP = os.environ.get("ROUTER_IP")
-STUDENT_ID = os.environ.get("STUDENT_ID")
-USERNAME = os.environ.get("USERNAME")
-PASSWORD = os.environ.get("PASSWORD")
-
+ROUTER_IP = "10.0.15.62"
+STUDENT_ID = "66070191"
 api_url = f"https://{ROUTER_IP}/restconf/data/ietf-interfaces:interfaces/interface=Loopback{STUDENT_ID}"
 headers = {
     "Accept": "application/yang-data+json",
     "Content-Type": "application/yang-data+json"
 }
-basicauth = (USERNAME, PASSWORD)
+basicauth = ("admin", "cisco")
 
 def get_loopback_ip(student_id):
-    # 3 หลักท้าย => abc; x=a, y=bc  -> 172.x.y.1/24
+    if not student_id:
+        raise ValueError("STUDENT_ID is empty")
     abc = student_id[-3:]
     x = abc[0]
-    y = abc[1:]  # เก็บสองหลักท้าย
+    y = abc[1:]
     return f"172.{x}.{y}.1"
 
 def create():
@@ -32,11 +30,12 @@ def create():
         }
     }
 
-    resp = requests.put(api_url, data=json.dumps(yangConfig), auth=basicauth, headers=headers, verify=False)
+    resp = requests.put(api_url, data=json.dumps(yangConfig),
+                        auth=basicauth, headers=headers, verify=False)
 
-    if(resp.status_code == 201):
-        return f"Interface loopback {STUDENT_ID} is created successfully"
-    elif(resp.status_code == 204):
+    if resp.status_code == 201:
+        return f"Interface Loopback{STUDENT_ID} is created successfully"
+    elif resp.status_code == 204:
         return f"Cannot create: Interface loopback {STUDENT_ID}"
     return f"Error: Interface Loopback {STUDENT_ID} already exists"
 
@@ -81,19 +80,13 @@ def disable():
 def status():
     api_url_status = f"https://{ROUTER_IP}/restconf/data/ietf-interfaces:interfaces-state/interface=Loopback{STUDENT_ID}"
     resp = requests.get(api_url_status, auth=basicauth, headers=headers, verify=False)
-
-    if 200 <= resp.status_code <= 299:
-        response_json = resp.json()
-        interface = response_json["ietf-interfaces:interface"][0]
-        admin_status = interface.get("admin-status")
-        oper_status = interface.get("oper-status")
-        if admin_status == "up" and oper_status == "up":
+    if resp.status_code == 200:
+        interfaces = resp.json().get("ietf-interfaces:interface", {})
+        admin_status = interfaces.get("admin-status", "down")
+        oper_status = interfaces.get("oper-status", "down")
+        if admin_status == 'up' and oper_status == 'up':
             return f"Interface loopback {STUDENT_ID} is enabled"
-        elif admin_status == "down" and oper_status == "down":
-            return f"Interface loopback {STUDENT_ID} is disabled"
-        else:
-            return f"Interface loopback {STUDENT_ID} admin={admin_status}, oper={oper_status}"
+        return f"Interface loopback {STUDENT_ID} is disabled"
     elif resp.status_code == 404:
         return f"No Interface loopback {STUDENT_ID}"
-    else:
-        return f"Error checking status for {STUDENT_ID}"
+    return f"Error getting status: {resp.status_code}"
