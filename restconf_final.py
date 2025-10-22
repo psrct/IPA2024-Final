@@ -69,7 +69,6 @@ def disable():
 
     resp = requests.patch(api_url, data=json.dumps(yangConfig), auth=basicauth, headers=headers, verify=False)
 
-
     if 200 <= resp.status_code <= 299:
         return f"Interface loopback {STUDENT_ID} is shutdowned successfully"
     elif resp.status_code == 404:
